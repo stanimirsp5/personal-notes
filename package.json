@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/stanimirsp5/personal-notes/issues"
   },
-  "homepage": "https://github.com/stanimirsp5/personal-notes#readme"
+  "homepage": "https://github.com/stanimirsp5/personal-notes#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "touch": "^3.1.0"
+  }
 }
