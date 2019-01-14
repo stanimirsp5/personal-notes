@@ -4,13 +4,19 @@
 <head>
     <title>Page Title</title>
     <link rel="stylesheet" href="note.css">
+    <title>Page Title</title>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="note.js"></script>
+    <!-- <link rel="stylesheet" type="text/css" href="notes.css"> -->
 </head>
 
 <body>
-
     <h1 id="text">This is a Heading</h1>
-    <p>This is a paragraph.</p>
-
+    <button type="button" onclick="createDB()">createDB</button>
+    <button type="button" onclick="loadNote()">loadNote</button>
+    <button id="addNote" type="button" onclick="addNote()">Add new note</button>
+    <button id="saveNote" type="button" disabled onclick="saveNote()">Save note</button>
+    <div id="container"></div>
 </body>
 
 </html>

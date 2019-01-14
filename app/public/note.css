@@ -1,3 +1,18 @@
-#text{
-    color:red;
-}
+#container>div {
+    width:100px;
+    height:100px;
+    background:#ff0;
+    overflow:auto;
+    margin:10px;
+    float:left;
+    box-shadow: 3px 3px 10px #000;
+  }
+  #container>div:nth-child(odd) {
+    background:#0f0;
+  }
+  #container>div:nth-child(3n) {
+    background:#f0f;
+  }  
+  #test{
+      color:red
+  }
