@@ -5,7 +5,7 @@ const port = 3000
 // app.get('/', (req, res) => res.send('Hello World!'))
 app.use(express.static('public'));
 
-// app.get('/', function (req, res) {
-//     res.render('note.html');
-// });
+app.get('/home', function (req, res) {
+    res.render('public/note.html');
+});
 app.listen(port, () => console.log(`Example app listening on http://localhost:3000/note.html`))
