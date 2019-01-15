@@ -1,15 +1,5 @@
-let notesCounter = 10;
 let noteText = "";
 loadNotes();
-function loadNote() {
-    // if (notesCounter != 0) {
-    //     loadNotes();
-    //     // multiplyNotes();
-    // } else {
-    //     addNote();
-    // }
-}
-
 
 function addNote() {
     let n = Math.random() * 20 - 10;
@@ -19,7 +9,9 @@ function addNote() {
         .css({ "transform": "rotate(" + n + "deg)" });
     $("#addNote").attr("disabled", true);
     $("#saveNote").attr("disabled", true);
-
+    $("#noteText").dblclick(function () {
+        $("#noteText").remove();
+    });
     $("body").on('DOMSubtreeModified', "#noteText", function () {
         noteText = $("#noteText").text();
         if (noteText !== "") {
@@ -33,7 +25,6 @@ function addNote() {
 function saveNote() {
     let noteObj = {
         text: noteText
-        // consecutiveNote: 1
     }
     let request = indexedDB.open("NotesDB");
 
@@ -51,24 +42,19 @@ function saveNote() {
 }
 
 function loadNotes() {
-    // request.transaction.db.name
-    // let dbExists = isDbExists();
-    // debugger
-    // if (!dbExists) {
-    //     var promise1 = new Promise(function (resolve, reject) {
-    //         createDB();
-    //     });
-    //     promise1.then(function (value) {
-    //         loadNotes()
-    //     });
-    // }
-
-    // debugger
+    debugger
+    databaseExists("NotesDB", function (isExists) {
+        if (!isExists) {
+            createDB();
+        } else {
+            loadSavedNotes();
+        }
+    });
+}
+function loadSavedNotes() {
     let notes = [];
     let request = indexedDB.open("NotesDB");
-    // if (request.transaction === null) {
-    //     createDB();
-    // }
+
     request.onsuccess = function (event) {
         let db = event.target.result;
         var objectStore = db.transaction("notes").objectStore("notes");
@@ -79,27 +65,39 @@ function loadNotes() {
                 cursor.continue();
             }
             else {
-                // alert("Got all notes: " + notes);
                 console.log(notes[1])
                 multiplyNotes(notes)
-
             }
         };
     }
 }
 
-// function isDbExists() {
-//     debugger
-//     var dbExists = true;
-//     var request = indexedDB.open("NotesDB");
-//     request.onupgradeneeded = function (e) {
-//         debugger
-//         e.target.transaction.abort();
-//         dbExists = false;
-//     }
+function databaseExists(dbname, callback) {
+    debugger
+    var req = indexedDB.open(dbname);
+    var existed = true;
+    req.onsuccess = function () {
+        req.result.close();
+        if (!existed)
+            indexedDB.deleteDatabase(dbname);
+        callback(existed);
+    }
+    req.onupgradeneeded = function () {
+        existed = false;
+    }
+}
+function isDbExists() {
+    debugger
+    var dbExists = true;
+    var request = indexedDB.open("NotesDB");
+    request.onupgradeneeded = function (e) {
+        debugger
+        e.target.transaction.abort();
+        dbExists = false;
+    }
 
-//     return dbExists;
-// }
+    return dbExists;
+}
 
 function multiplyNotes(notes) {
     for (let i = 0; i < notes.length; i++) {
@@ -114,11 +112,14 @@ function reloadNotes(note, noteNum) {
         .css({ "transform": "rotate(" + n + "deg)" });
     $("#addNote").attr("disabled", false);
     $("#saveNote").attr("disabled", true);
-    $(`#noteText${noteNum}`).text(note.text);
+    let currentNote = $(`#noteText${noteNum}`);
+    currentNote.text(note.text);
+    currentNote.dblclick(function () {
+        currentNote.remove();
+    });
 }
 
 function createDB() {
-    let db;
     let request = indexedDB.open("NotesDB");
     request.onerror = function (event) {
         alert("Can`t access IndexedDB!");
@@ -136,13 +137,26 @@ function createDB() {
         ];
         let objectStore = db.createObjectStore("notes", { autoIncrement: true });
         objectStore.createIndex("text", "text", { unique: false });
-        // objectStore.createIndex("consecutiveNote", "consecutiveNote", { unique: false });
         objectStore.transaction.oncomplete = function (event) {
             let customerObjectStore = db.transaction("notes", "readwrite").objectStore("notes");
             noteData.forEach(function (customer) {
                 customerObjectStore.add(customer);
             });
+            loadSavedNotes();
         };
     };
+}
+
+function removeNote() {
+    let request = indexedDB.open("NotesDB");
+    request.onupgradeneeded = function (event) {
+
+        var request = db.transaction(["customers"], "readwrite")
+            .objectStore("customers")
+            .delete("444-44-4444");
+        request.onsuccess = function (event) {
+            // It's gone!
+        };
+    }
 }
 
