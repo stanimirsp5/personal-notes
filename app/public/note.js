@@ -42,7 +42,6 @@ function saveNote() {
 }
 
 function loadNotes() {
-    debugger
     databaseExists("NotesDB", function (isExists) {
         if (!isExists) {
             createDB();
@@ -73,7 +72,6 @@ function loadSavedNotes() {
 }
 
 function databaseExists(dbname, callback) {
-    debugger
     var req = indexedDB.open(dbname);
     var existed = true;
     req.onsuccess = function () {
@@ -87,11 +85,9 @@ function databaseExists(dbname, callback) {
     }
 }
 function isDbExists() {
-    debugger
     var dbExists = true;
     var request = indexedDB.open("NotesDB");
     request.onupgradeneeded = function (e) {
-        debugger
         e.target.transaction.abort();
         dbExists = false;
     }
@@ -150,12 +146,12 @@ function createDB() {
 function removeNote() {
     let request = indexedDB.open("NotesDB");
     request.onupgradeneeded = function (event) {
-
-        var request = db.transaction(["customers"], "readwrite")
-            .objectStore("customers")
+        let db = event.target.result;
+        var request = db.transaction(["notes"], "readwrite")
+            .objectStore("notes")
             .delete("444-44-4444");
         request.onsuccess = function (event) {
-            // It's gone!
+            console.log("deleted");
         };
     }
 }
