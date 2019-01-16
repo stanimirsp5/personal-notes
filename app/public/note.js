@@ -1,19 +1,24 @@
-let noteText = "";
+var noteText = "";
+var notes = [];
+
 loadNotes();
 
 function addNote() {
     let n = Math.random() * 20 - 10;
+    let newNoteId = notes.length + 1;
     $("#container")
-        .append('<div id="noteText" contenteditable="true"></div>')
+        .append(`<div id="${newNoteId}" contenteditable="true"></div>`)
         .children(":last")
         .css({ "transform": "rotate(" + n + "deg)" });
     $("#addNote").attr("disabled", true);
     $("#saveNote").attr("disabled", true);
-    $("#noteText").dblclick(function () {
-        $("#noteText").remove();
+    let newNoteIdTag = $(`#${newNoteId}`);
+
+    newNoteIdTag.dblclick(function () {
+        removeDivTagNote(newNoteIdTag);
     });
-    $("body").on('DOMSubtreeModified', "#noteText", function () {
-        noteText = $("#noteText").text();
+    $("body").on('DOMSubtreeModified', newNoteIdTag, function () {
+        noteText = newNoteIdTag.text();
         if (noteText !== "") {
             $("#saveNote").attr("disabled", false);
         } else {
@@ -35,10 +40,10 @@ function saveNote() {
 
         let request = objectStore.add(noteObj);
         request.onsuccess = function (event) {
-            // alert("note added")
+            notes.push(noteObj);
+            addNote();
         };
     }
-    addNote();
 }
 
 function loadNotes() {
@@ -51,7 +56,6 @@ function loadNotes() {
     });
 }
 function loadSavedNotes() {
-    let notes = [];
     let request = indexedDB.open("NotesDB");
 
     request.onsuccess = function (event) {
@@ -64,7 +68,6 @@ function loadSavedNotes() {
                 cursor.continue();
             }
             else {
-                console.log(notes[1])
                 multiplyNotes(notes)
             }
         };
@@ -97,24 +100,31 @@ function isDbExists() {
 
 function multiplyNotes(notes) {
     for (let i = 0; i < notes.length; i++) {
-        reloadNotes(notes[i], i);
+        reloadNotes(notes[i], i + 1);
     }
 }
 function reloadNotes(note, noteNum) {
     let n = Math.random() * 20 - 10;
     $("#container")
-        .append(`<div id="noteText${noteNum}" contenteditable="true"></div>`)
+        .append(`<div id="${noteNum}" contenteditable="true"></div>`)
         .children(":last")
         .css({ "transform": "rotate(" + n + "deg)" });
     $("#addNote").attr("disabled", false);
     $("#saveNote").attr("disabled", true);
-    let currentNote = $(`#noteText${noteNum}`);
+    let currentNote = $(`#${noteNum}`);
     currentNote.text(note.text);
     currentNote.dblclick(function () {
-        currentNote.remove();
+        removeDivTagNote(currentNote)
     });
 }
-
+function removeDivTagNote(currentNote) {
+    if (currentNote.text() !== "") {
+        return;
+    }
+    let noteId = +currentNote.selector[1];
+    removeNote(noteId);
+    currentNote.remove();
+}
 function createDB() {
     let request = indexedDB.open("NotesDB");
     request.onerror = function (event) {
@@ -143,15 +153,19 @@ function createDB() {
     };
 }
 
-function removeNote() {
+function removeNote(noteId) {
     let request = indexedDB.open("NotesDB");
-    request.onupgradeneeded = function (event) {
+    request.onsuccess = function (event) {
         let db = event.target.result;
-        var request = db.transaction(["notes"], "readwrite")
-            .objectStore("notes")
-            .delete("444-44-4444");
-        request.onsuccess = function (event) {
-            console.log("deleted");
+        var objectStore = db.transaction("notes").objectStore("notes");
+        objectStore.openCursor(noteId).onsuccess = function (event) {
+            var cursor = event.target.result;
+            var request = db.transaction(["notes"], "readwrite")
+                .objectStore("notes")
+                .delete(cursor.key);
+            request.onsuccess = function (event) {
+                console.log("deleted");
+            };
         };
     }
 }
