@@ -1,5 +1,6 @@
 var noteText = "";
 var notes = [];
+var notesMap = new Map();
 
 loadNotes();
 
@@ -58,7 +59,6 @@ function loadNotes() {
 }
 function loadSavedNotes() {
     let request = indexedDB.open("NotesDB");
-
     request.onsuccess = function (event) {
         let db = event.target.result;
         var objectStore = db.transaction("notes").objectStore("notes");
@@ -68,10 +68,11 @@ function loadSavedNotes() {
                 debugger
                 //TODO use dictionary
                 notes.push(cursor.value);
+                notesMap.set(cursor.key, cursor.value.text);
                 cursor.continue();
             }
             else {
-                multiplyNotes(notes)
+                multiplyNotes(notes);
             }
         };
     }
