@@ -1,13 +1,20 @@
 var noteText = "";
-var notes = [];
+var lastNoteId = 0;
 var notesMap = new Map();
 
 loadNotes();
-
+function loadNotes() {
+    databaseExists("NotesDB", function (isExists) {
+        if (!isExists) {
+            createDB();
+        } else {
+            loadSavedNotes();
+        }
+    });
+}
 function addNote() {
     let n = Math.random() * 20 - 10;
-    let newNoteId = notes.length + 1;
-    console.log("newNoteId => " + newNoteId);
+    let newNoteId = lastNoteId + 1;
     $("#container")
         .append(`<div id="${newNoteId}" contenteditable="true"></div>`)
         .children(":last")
@@ -19,7 +26,7 @@ function addNote() {
     newNoteIdTag.dblclick(function () {
         removeDivTagNote(newNoteIdTag);
     });
-    $("body").on('DOMSubtreeModified', newNoteIdTag, function () {
+    $("#container").on('DOMSubtreeModified', newNoteIdTag, function () {
         noteText = newNoteIdTag.text();
         if (noteText !== "") {
             $("#saveNote").attr("disabled", false);
@@ -28,7 +35,6 @@ function addNote() {
         }
     });
 }
-
 function saveNote() {
     let noteObj = {
         text: noteText
@@ -42,20 +48,11 @@ function saveNote() {
 
         let request = objectStore.add(noteObj);
         request.onsuccess = function (event) {
-            notes.push(noteObj);
+            lastNoteId++;
             addNote();
+            $(`#${lastNoteId}`).attr('contenteditable', 'false');
         };
     }
-}
-
-function loadNotes() {
-    databaseExists("NotesDB", function (isExists) {
-        if (!isExists) {
-            createDB();
-        } else {
-            loadSavedNotes();
-        }
-    });
 }
 function loadSavedNotes() {
     let request = indexedDB.open("NotesDB");
@@ -65,19 +62,16 @@ function loadSavedNotes() {
         objectStore.openCursor().onsuccess = function (event) {
             let cursor = event.target.result;
             if (cursor) {
-                debugger
-                //TODO use dictionary
-                notes.push(cursor.value);
+                lastNoteId = cursor.key;
                 notesMap.set(cursor.key, cursor.value.text);
                 cursor.continue();
             }
             else {
-                multiplyNotes(notes);
+                multiplyNotes(notesMap);
             }
         };
     }
 }
-
 function databaseExists(dbname, callback) {
     var req = indexedDB.open(dbname);
     var existed = true;
@@ -98,25 +92,23 @@ function isDbExists() {
         e.target.transaction.abort();
         dbExists = false;
     }
-
     return dbExists;
 }
-
-function multiplyNotes(notes) {
-    for (let i = 0; i < notes.length; i++) {
-        reloadNotes(notes[i], i + 1);
+function multiplyNotes(notesMap) {
+    for (let [key, value] of notesMap) {
+        reloadNotes(value, key);
     }
 }
-function reloadNotes(note, noteNum) {
+function reloadNotes(noteText, noteKey) {
     let n = Math.random() * 20 - 10;
     $("#container")
-        .append(`<div id="${noteNum}" contenteditable="false"></div>`)
+        .append(`<div id="${noteKey}" contenteditable="false"></div>`)
         .children(":last")
         .css({ "transform": "rotate(" + n + "deg)" });
     $("#addNote").attr("disabled", false);
     $("#saveNote").attr("disabled", true);
-    let currentNote = $(`#${noteNum}`);
-    currentNote.text(note.text);
+    let currentNote = $(`#${noteKey}`);
+    currentNote.text(noteText);
     currentNote.dblclick(function () {
         removeDivTagNote(currentNote)
     });
@@ -125,9 +117,9 @@ function removeDivTagNote(currentNote) {
     if (currentNote.text() === "") {
         return;
     }
-    let noteId = +currentNote.selector[1];
-    removeNote(noteId);
+    let noteId = currentNote.selector.substring(1);
     currentNote.remove();
+    removeNote(+noteId);
 }
 function createDB() {
     let request = indexedDB.open("NotesDB");
@@ -169,16 +161,9 @@ function removeNote(noteId) {
                     .objectStore("notes")
                     .delete(cursor.key);
                 request.onsuccess = function () {
-                    debugger
-                    // $.get('/note', function (data) {
-                    //     $('#mydiv').html(data);
-                    // });
-                    // $("#container").load(" #container > *");
-                    // notes = [];
-                    // loadSavedNotes();
                 };
             } else {
-                console.log("no");
+                alert("Can`t delete note")
             }
         };
     }
