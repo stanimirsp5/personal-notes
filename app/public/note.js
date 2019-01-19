@@ -6,6 +6,7 @@ loadNotes();
 function addNote() {
     let n = Math.random() * 20 - 10;
     let newNoteId = notes.length + 1;
+    console.log("newNoteId => " + newNoteId);
     $("#container")
         .append(`<div id="${newNoteId}" contenteditable="true"></div>`)
         .children(":last")
@@ -64,6 +65,8 @@ function loadSavedNotes() {
         objectStore.openCursor().onsuccess = function (event) {
             let cursor = event.target.result;
             if (cursor) {
+                debugger
+                //TODO use dictionary
                 notes.push(cursor.value);
                 cursor.continue();
             }
@@ -106,7 +109,7 @@ function multiplyNotes(notes) {
 function reloadNotes(note, noteNum) {
     let n = Math.random() * 20 - 10;
     $("#container")
-        .append(`<div id="${noteNum}" contenteditable="true"></div>`)
+        .append(`<div id="${noteNum}" contenteditable="false"></div>`)
         .children(":last")
         .css({ "transform": "rotate(" + n + "deg)" });
     $("#addNote").attr("disabled", false);
@@ -118,7 +121,7 @@ function reloadNotes(note, noteNum) {
     });
 }
 function removeDivTagNote(currentNote) {
-    if (currentNote.text() !== "") {
+    if (currentNote.text() === "") {
         return;
     }
     let noteId = +currentNote.selector[1];
@@ -160,12 +163,22 @@ function removeNote(noteId) {
         var objectStore = db.transaction("notes").objectStore("notes");
         objectStore.openCursor(noteId).onsuccess = function (event) {
             var cursor = event.target.result;
-            var request = db.transaction(["notes"], "readwrite")
-                .objectStore("notes")
-                .delete(cursor.key);
-            request.onsuccess = function (event) {
-                console.log("deleted");
-            };
+            if (cursor) {
+                var request = db.transaction(["notes"], "readwrite")
+                    .objectStore("notes")
+                    .delete(cursor.key);
+                request.onsuccess = function () {
+                    debugger
+                    // $.get('/note', function (data) {
+                    //     $('#mydiv').html(data);
+                    // });
+                    // $("#container").load(" #container > *");
+                    // notes = [];
+                    // loadSavedNotes();
+                };
+            } else {
+                console.log("no");
+            }
         };
     }
 }
